@@ -187,4 +187,4 @@ def redirect_to_long_url(short_suffix):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, port=server_port)
+    app.run(debug=True, host='0.0.0.0')

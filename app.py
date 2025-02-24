@@ -4,25 +4,25 @@ import string
 import random
 from datetime import datetime
 import bcrypt
-import socket  # 导入 socket 模块用于获取本地 IP
+import socket
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# 获取本地 IP 地址
-def get_local_ip():
+# 获取服务器的IP地址
+def get_server_ip():
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
+        # 获取本机的主机名
+        hostname = socket.gethostname()
+        # 通过主机名获取IP地址
+        server_ip = socket.gethostbyname(hostname)
     except Exception as e:
-        print(f"获取本地 IP 地址时出错: {e}")
-        return "127.0.0.1"
+        server_ip = '127.0.0.1'  # 默认回退到localhost
+    return server_ip
 
-# 获取服务器端口
-server_port = 5000  # 假设服务器端口为 5000，可根据实际情况修改
+# 获取映射的端口
+server_port = int(os.environ.get('SERVER_PORT', 5000))  # 从环境变量中获取端口，默认5000
 
 # 初始化数据库
 def init_db():
@@ -45,13 +45,13 @@ def init_db():
 
 # 生成短链接
 def generate_short_url(custom_suffix=None):
-    local_ip = get_local_ip()
+    server_ip = get_server_ip()
     if custom_suffix:
-        short_url = f"http://{local_ip}:{server_port}/{custom_suffix}"
+        short_url = f"http://{server_ip}:{server_port}/{custom_suffix}"
     else:
         characters = string.ascii_letters + string.digits
         random_suffix = ''.join(random.choice(characters) for i in range(6))
-        short_url = f"http://{local_ip}:{server_port}/{random_suffix}"
+        short_url = f"http://{server_ip}:{server_port}/{random_suffix}"
     return short_url
 
 # 注册页面
@@ -176,7 +176,7 @@ def link_detail(short_url):
 def redirect_to_long_url(short_suffix):
     conn = sqlite3.connect('short_url.db')
     c = conn.cursor()
-    c.execute("SELECT long_url FROM links WHERE short_url =?", (f"http://{get_local_ip()}:{server_port}/{short_suffix}",))
+    c.execute("SELECT long_url FROM links WHERE short_url =?", (f"http://{get_server_ip()}:{server_port}/{short_suffix}",))
     result = c.fetchone()
     conn.close()
     if result:
@@ -187,4 +187,4 @@ def redirect_to_long_url(short_suffix):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=server_port)

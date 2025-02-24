@@ -12,14 +12,7 @@ app.secret_key = 'your_secret_key'
 
 # 获取服务器的IP地址
 def get_server_ip():
-    try:
-        # 获取本机的主机名
-        hostname = socket.gethostname()
-        # 通过主机名获取IP地址
-        server_ip = socket.gethostbyname(hostname)
-    except Exception as e:
-        server_ip = '127.0.0.1'  # 默认回退到localhost
-    return server_ip
+    return os.environ.get('SERVER_IP', '127.0.0.1')  # 从环境变量中获取IP地址，默认回退到localhost
 
 # 获取映射的端口
 server_port = int(os.environ.get('SERVER_PORT', 5000))  # 从环境变量中获取端口，默认5000
@@ -181,6 +174,12 @@ def redirect_to_long_url(short_suffix):
     conn.close()
     if result:
         long_url = result[0]
+        # 更新点击次数
+        conn = sqlite3.connect('short_url.db')
+        c = conn.cursor()
+        c.execute("UPDATE links SET clicks = clicks + 1 WHERE short_url =?", (f"http://{get_server_ip()}:{server_port}/{short_suffix}",))
+        conn.commit()
+        conn.close()
         return redirect(long_url)
     else:
         return "Short link not found."

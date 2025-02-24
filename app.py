@@ -148,4 +148,16 @@ def link_detail(short_url):
     result = c.fetchone()
     if result:
         clicks = result[0]
-        return render_template('link_detail.html
+        return render_template('link_detail.html', short_url=short_url, clicks=clicks)
+    else:
+        return "Link not found."
+
+# 登出
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True, host='0.0.0.0')

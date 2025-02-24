@@ -4,9 +4,25 @@ import string
 import random
 from datetime import datetime
 import bcrypt
+import socket  # 导入 socket 模块用于获取本地 IP
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+
+# 获取本地 IP 地址
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception as e:
+        print(f"获取本地 IP 地址时出错: {e}")
+        return "127.0.0.1"
+
+# 获取服务器端口
+server_port = 5000  # 假设服务器端口为 5000，可根据实际情况修改
 
 # 初始化数据库
 def init_db():
@@ -29,10 +45,13 @@ def init_db():
 
 # 生成短链接
 def generate_short_url(custom_suffix=None):
+    local_ip = get_local_ip()
     if custom_suffix:
-        return custom_suffix
-    characters = string.ascii_letters + string.digits
-    short_url = ''.join(random.choice(characters) for i in range(6))
+        short_url = f"http://{local_ip}:{server_port}/{custom_suffix}"
+    else:
+        characters = string.ascii_letters + string.digits
+        random_suffix = ''.join(random.choice(characters) for i in range(6))
+        short_url = f"http://{local_ip}:{server_port}/{random_suffix}"
     return short_url
 
 # 注册页面
@@ -152,12 +171,20 @@ def link_detail(short_url):
     else:
         return "Link not found."
 
-# 登出
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('login'))
+# 短链接重定向
+@app.route('/<short_suffix>')
+def redirect_to_long_url(short_suffix):
+    conn = sqlite3.connect('short_url.db')
+    c = conn.cursor()
+    c.execute("SELECT long_url FROM links WHERE short_url =?", (f"http://{get_local_ip()}:{server_port}/{short_suffix}",))
+    result = c.fetchone()
+    conn.close()
+    if result:
+        long_url = result[0]
+        return redirect(long_url)
+    else:
+        return "Short link not found."
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, port=server_port)

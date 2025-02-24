@@ -4,7 +4,6 @@ import string
 import random
 from datetime import datetime
 import bcrypt
-import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -31,15 +30,10 @@ def init_db():
 # 生成短链接
 def generate_short_url(custom_suffix=None):
     if custom_suffix:
-        short_url = custom_suffix
-    else:
-        characters = string.ascii_letters + string.digits
-        short_url = ''.join(random.choice(characters) for i in range(6))
-    
-    # 获取当前域名
-    domain = os.environ.get('DOMAIN', 'localhost:5000')  # 默认使用localhost:5000
-    full_short_url = f"http://{domain}/{short_url}"
-    return full_short_url
+        return custom_suffix
+    characters = string.ascii_letters + string.digits
+    short_url = ''.join(random.choice(characters) for i in range(6))
+    return short_url
 
 # 注册页面
 @app.route('/register', methods=['GET', 'POST'])
@@ -158,26 +152,12 @@ def link_detail(short_url):
     else:
         return "Link not found."
 
-# 短链接重定向
-@app.route('/<short_url>')
-def redirect_to_long_url(short_url):
-    conn = sqlite3.connect('short_url.db')
-    c = conn.cursor()
-    c.execute("SELECT long_url FROM links WHERE short_url =?", (short_url,))
-    result = c.fetchone()
-    conn.close()
-    if result:
-        long_url = result[0]
-        # 更新点击次数
-        conn = sqlite3.connect('short_url.db')
-        c = conn.cursor()
-        c.execute("UPDATE links SET clicks = clicks + 1 WHERE short_url =?", (short_url,))
-        conn.commit()
-        conn.close()
-        return redirect(long_url)
-    else:
-        return "Short URL not found.", 404
+# 登出
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

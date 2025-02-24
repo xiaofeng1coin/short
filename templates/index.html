@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2">
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{{ url_for('index') }}">仪表盘</a>
+                    <a class="nav-link" href="{{ url_for('link_list') }}">链接</a>
+                    <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+                </nav>
+            </div>
+            <div class="col-md-10">
+                <h1>已创建的链接数量: {{ link_count }}</h1>
+                <h2>最新链接列表</h2>
+                <ul>
+                    {% for short_url, long_url, clicks, created_at in latest_links %}
+                        <li><a href="{{ url_for('link_detail', short_url=short_url) }}">{{ short_url }}</a> - {{ long_url }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('link_list') }}" class="btn btn-primary">创建新链接</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

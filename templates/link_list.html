@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>已创建的链接列表</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>已创建的链接列表</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>短链</th>
+                    <th>原长链接</th>
+                    <th>点击率</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for short_url, long_url, clicks, created_at in links %}
+                    <tr>
+                        <td>{{ short_url }}</td>
+                        <td>{{ long_url }}</td>
+                        <td>{{ clicks }}</td>
+                        <td>{{ created_at }}</td>
+                        <td>
+                            <a href="{{ url_for('edit_link', short_url=short_url) }}" class="btn btn-primary">编辑</a>
+                            <button class="btn btn-secondary" onclick="copyToClipboard('{{ short_url }}')">复制</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <form method="post">
+            <div class="mb-3">
+                <label for="long_url" class="form-label">原长链接</label>
+                <input type="text" class="form-control" id="long_url" name="long_url" required>
+            </div>
+            <div class="mb-3">
+                <label for="custom_suffix" class="form-label">自定义后缀</label>
+                <input type="text" class="form-control" id="custom_suffix" name="custom_suffix">
+            </div>
+            <button type="submit" class="btn btn-primary">生成</button>
+        </form>
+    </div>
+    <script>
+        function copyToClipboard(text) {
+            var dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+        }
+    </script>
+</body>
+</html>
